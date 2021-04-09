@@ -63,8 +63,6 @@ async def selfie_query(message: types.Message, state: FSMContext):
         await Race.FINISH.set()
     else:
         await message.answer('Ты далеко от точки, попробуй еще раз', reply_markup=get_location_button)
-        print(message.location)
-        print(await state.get_state())
 
 
 # подверждение фото со стейтами
@@ -129,6 +127,7 @@ async def got_selfie_mosgorbike(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types=types.ContentType.PHOTO, state=Race.FINISH)
 async def got_selfie_finish(message: types.Message, state: FSMContext):
     """Финишное фото у мгб и расчет времени гонки"""
+
     await state.finish()
     time_start = await db.get_start_time(id=message.from_user.id)
     time_start = time_start[0]

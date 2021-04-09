@@ -14,7 +14,6 @@ class Database:
         pool = await asyncpg.create_pool(
             user=config.PGUSER,
             password=config.PGPASSWORD,
-            host=config.ip,
             database=config.DATABASE
         )
         return cls(pool)

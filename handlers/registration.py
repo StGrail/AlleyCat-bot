@@ -1,8 +1,12 @@
+import asyncio
+from datetime import datetime
+
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery
 
 from FSM.Race_states import Race
 from FSM.Registation_states import Registration_form
+from constants.start_time import time_of_finish_registration, time_of_start_race
 from constants.text_messages import RULES, START_INFO
 from keyboards.inline_kb import bicycle_type, gender, apply_registration, check_reg_answer, are_you_ready
 from utils.loader import dp, db
@@ -72,20 +76,28 @@ async def correcting(call: CallbackQuery, state: FSMContext):
 # информация о месте старта.
 # пока что закомментирована, тк еще нет даты старта и регистрация закрыта.
 @dp.callback_query_handler(text='data_ok')
-async def waiting_start(call: CallbackQuery, state: FSMContext):
-    await call.message.edit_text(text=START_INFO)
-
-    # while ctime() != time_of_finish_registation:
-    #     await asyncio.sleep(1)
-    # else:
-    #     count = await db.count_racers()
-    #     await call.message.answer(f'Регистрация окончена, всего зарегистрировано:\n'
-    #                               f' {count} человек(а).\n'
-    #                               f'Ждем тебя на месте старта в 16.30')
-    #
-    # while ctime() != time_of_start_race:
-    #     await asyncio.sleep(1)
-    # else:
-    await call.message.answer('Ты готов к гонке?', reply_markup=are_you_ready)
-    await Race.FIRST_POINT.set()
-    '''Переписать на асинхронный код'''
+async def waiting_start(call: CallbackQuery):
+    now = datetime.now().strftime('%m/%d/%y %H:%M:%S')
+    if now < time_of_finish_registration:
+        print(now)
+        await call.message.edit_text(text=START_INFO)
+        while True:
+            now_in_while = datetime.now().strftime('%m/%d/%y %H:%M:%S')
+            if now_in_while < time_of_finish_registration:
+                await asyncio.sleep(1)
+            else:
+                count = await db.count_racers()
+                await call.message.answer(f'Регистрация окончена, всего зарегистрировано:\n'
+                                          f' {count} человек(а).\n'
+                                          f'Ждем тебя на месте старта в 13:50.')
+                break
+        while True:
+            now_in_while_2 = datetime.now().strftime('%m/%d/%y %H:%M:%S')
+            if now_in_while_2 >= time_of_start_race:
+                await call.message.answer('Ты готов к гонке?', reply_markup=are_you_ready)
+                await Race.FIRST_POINT.set()
+                break
+            else:
+                await asyncio.sleep(1)
+    else:
+        await call.message.edit_text(text=f'Регистрация была открыта до: {time_of_finish_registration}')
